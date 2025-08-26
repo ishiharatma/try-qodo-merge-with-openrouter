@@ -1,0 +1,48 @@
+name: Code Review(OpenRouter)
+
+on:
+  pull_request:
+  pull_request_review_comment:
+    types: [created]
+
+# 同時実行制御：同じPRで複数のレビューワークフローが重複実行されることを防ぐ
+concurrency:
+  group:
+    ${{ github.repository }}-${{ github.event.number || github.head_ref ||
+    github.sha }}-${{ github.workflow }}-${{ github.event_name ==
+    'pull_request_review_comment' && 'pr_comment' || 'pr' }}
+  # 既存ジョブのキャンセル条件:
+  cancel-in-progress: ${{ github.event_name != 'pull_request_review_comment' }}
+
+jobs:
+  # PRエージェントジョブ
+  pr_agent_job:
+    # PRエージェントの実行条件:
+    # 1. Botからのイベントではない（無限ループを防ぐ）
+    # 2. PRイベントである
+    # 3. 変更ファイル数が100未満（大規模変更を除外してパフォーマンス向上
+    if: |
+      ${{ github.event.sender.type != 'Bot' }} &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.changed_files < 50
+    # 実行環境
+    runs-on: ubuntu-latest
+    # GitHub API操作に必要な権限
+    permissions:
+      issues: write             # イシュー作成・編集
+      pull-requests: write # PRコメント・レビュー投稿
+      contents: write         # コード変更提案
+      id-token: write          # OIDC認証
+    name: Run pr agent on every pull request, respond to user comments
+    steps:
+      # リポジトリのコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
+      # PRエージェントを実行（OpenRouter経由でAI分析）
+      # see: https://qodo-merge-docs.qodo.ai/installation/github/#configuration-examples
+      - name: PR Agent action step with OpenRouter
+        id: pragent
+        uses: qodo-ai/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENROUTER.KEY: ${{ secrets.OPENROUTER_API_KEY }} # OpenRouter API認証

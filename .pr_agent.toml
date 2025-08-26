@@ -1,0 +1,104 @@
+# https://pr-agent-docs.codium.ai/
+# https://github.com/qodo-ai/pr-agent/blob/main/pr_agent/settings/configuration.toml
+
+[config]
+# see: https://openrouter.ai/models
+model = "openai/gpt-5" # 使用するメインのAIモデル
+fallback_models = ["openai/gpt-4o"] # メインモデルが失敗した場合に使用するフォールバックモデルのリスト
+#model_reasoning="openai/gpt-4o-mini" # dedicated reasoning model for self-reflection
+#model_weak="openai/gpt-4o" # optional, a weaker model to use for some easier tasks
+
+# 指定したモデルが以下にない場合、"Model openai/gpt-5 is not defined in MAX_TOKENS"というエラーになるので指定しておく
+# https://github.com/qodo-ai/pr-agent/blob/main/pr_agent/algo/__init__.py
+custom_model_max_tokens = 200000
+
+ai_timeout = 300
+response_language = "ja-JP"
+#temperature = 0.1
+#log_level = "DEBUG"
+ignore_pr_title = ["^\\[Auto\\]", "^Auto"]
+ignore_pr_labels = ['invalid', 'do-not-review'] # レビューを除外するラベル
+
+[ignore]
+glob = ['dist/**',  'node_modules/**']
+
+[openrouter]
+
+[github_action_config]
+auto_review = true
+auto_improve = true
+auto_describe = true
+
+[pr_reviewer]
+# レビュー設定
+extra_instructions = """\
+(1) Answer in Japanese
+(2) Your purpose is to act as a highly experienced software engineer and provide a thorough review of the code, related documents, and articles
+and suggest code snippets to improve these with various aspects.
+
+(3) **Never**
+comment on indentation, whitespace, blank lines, or other purely stylistic issues  
+unless they change program semantics (e.g., Python block levels).
+
+(4) **Follow the following instructions**
+Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions.
+Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
+
+(5) **Priority Review Areas - Check these systematically:**
+- **Security**: Plaintext passwords, SQL injection, input validation, exception information leaks
+- **Error Handling**: Bare except clauses, missing try-catch blocks, silent error suppression
+- **Resource Management**: Missing context managers (with statements), unclosed connections/files
+- **Type Safety**: Missing type hints, incorrect type usage, Any types without justification
+- **Performance**: Inefficient algorithms (O(n²) or worse), unnecessary loops, memory leaks
+- **Code Quality**: Magic numbers, unclear variable names (a,b,c,x,y), unused imports/variables
+- **API Design**: Missing input validation, no error responses, required field checks
+- **Architecture**: Single responsibility principle violations, tight coupling, global state usage
+
+(6) **Detection Focus:**
+Prioritize finding concrete, actionable issues over stylistic preferences. 
+Each suggestion must include specific code examples and precise fix recommendations.
+Flag any undefined functions, missing dependencies, or runtime errors.
+"""
+num_code_suggestions = 5 # 提案を多めに要求
+inline_code_comments = true
+ask_and_reflect = true
+
+[pr_description]
+# PR説明設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
+generate_ai_title=true
+add_original_user_description = false # 元のユーザー説明の追加
+publish_description_as_comment = true # PRの本文（description）として直接更新するのではなく、PRのコメントとして投稿するかどうか
+
+[pr_code_suggestions]
+# コード提案設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
+commitable_code_suggestions = true # コミット可能なコード提案
+
+[pr_add_docs]
+# ドキュメント追加設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
+
+[pr_questions]
+# 質問設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
+
+[pr_update_changelog]
+# 変更履歴設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
+
+[pr_test]
+# テスト設定
+extra_instructions = """\
+(1) Answer in Japanese
+"""
