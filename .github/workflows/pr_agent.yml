@@ -20,9 +20,9 @@ jobs:
     # PRエージェントの実行条件:
     # 1. Botからのイベントではない（無限ループを防ぐ）
     # 2. PRイベントである
-    # 3. 変更ファイル数が100未満（大規模変更を除外してパフォーマンス向上
+    # 3. 変更ファイル数を制限（大規模変更を除外してパフォーマンス向上
     if: |
-      ${{ github.event.sender.type != 'Bot' }} &&
+      github.event.sender.type != 'Bot' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.changed_files < 50
     # 実行環境
